@@ -4,7 +4,7 @@
 # Define the prefix to this directory.
 # Note: The name must be unique within this build and should be
 #       based on the root of the project
-TARGET_STM32F4XX_HAL_SRC_PATH = $(TARGET_STM32F4XX_HAL_PATH)/src
+TARGET_STM32F4XX_HAL_SRC_PATH = $(TARGET_STM32F4XX_HAL_PATH)/Src
 
 # C source files included in this build.
 CSRC += $(call target_files,$(TARGET_STM32F4XX_HAL_SRC_PATH)/,*.c)
