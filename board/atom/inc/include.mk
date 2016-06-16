@@ -1,4 +1,5 @@
 INCLUDE_DIRS += $(BOARD_TYPE_PATH)/inc
+INCLUDE_DIRS += $(BOARD_TYPE_PATH)/inc/ros_lib
 
 ifneq (,$(findstring board,$(MAKE_DEPENDENCIES)))
 

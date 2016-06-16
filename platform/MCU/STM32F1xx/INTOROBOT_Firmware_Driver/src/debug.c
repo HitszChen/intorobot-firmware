@@ -47,8 +47,7 @@ uint32_t log_level_at_run_time = LOG_LEVEL_AT_RUN_TIME;
 void log_print_(int level, int line, const char *func, const char *file, const char *msg, ...)
 {
     char _buffer[MAX_DEBUG_MESSAGE_LENGTH];
-    /*
-    static char * levels[] =
+    static char * levels[] = 
     {
         "",
         "LOG  ",
@@ -57,7 +56,6 @@ void log_print_(int level, int line, const char *func, const char *file, const c
         "ERROR",
         "PANIC",
     };
-    */
     va_list args;
     va_start(args, msg);
     file = file ? strrchr(file,'/') + 1 : "";

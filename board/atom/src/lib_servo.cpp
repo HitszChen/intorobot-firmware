@@ -4,7 +4,7 @@
  * @author   : robin
  * @version  : V1.0.0
  * @date      : 2015-02-01
- * @brief      :
+ * @brief      :   
  ******************************************************************************
   Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
 
@@ -35,43 +35,43 @@
                                         this->minPW, this->maxPW)))
 #define US_TO_ANGLE(us)   ((int16_t)(map((us), this->minPW, this->maxPW,  \
                                        this->minAngle, this->maxAngle)))
-
+                                       
 /*********************************************************************************
-  *Function		:     Servo::Servo(void)
+  *Function		:     Servo::Servo(void) 
   *Description	:     constructor function
   *Input		      :     none
-  *Output		:     none
+  *Output		:     none    
   *Return		:     none
-  *author		:     robot
-  *date			:     2015-02-01
-  *Others		:
+  *author		:     robot   
+  *date			:     2015-02-01      
+  *Others		:         
 **********************************************************************************/
-Servo::Servo(void)
+Servo::Servo(void) 
 {
     this->resetFields();
 }
 
 /*********************************************************************************
-  *Function		: bool attach
+  *Function		: bool attach      
   *Description	: Associate this instance with a servomotor whose input is connected to pin.
-                            If this instance is already attached to a pin, it will be detached before being attached to the new pin.
+                            If this instance is already attached to a pin, it will be detached before being attached to the new pin. 
                             This function doesn't detach any interrupt attached with the pin's timer channel.
   *Input		      :  pin:Pin connected to the servo pulse wave input. This pin must be capable of PWM output.
-                            minPulseWidth: Minimum pulse width to write to pin, in microseconds.  This will be associated with a minAngle degree angle.
+                            minPulseWidth: Minimum pulse width to write to pin, in microseconds.  This will be associated with a minAngle degree angle.  
                                  Defaults to SERVO_DEFAULT_MIN_PW = 544.
-                            maxPulseWidth:Maximum pulse width to write to pin, in microseconds.  This will be associated with a maxAngle degree angle.
+                            maxPulseWidth:Maximum pulse width to write to pin, in microseconds.  This will be associated with a maxAngle degree angle. 
                                  Defaults to SERVO_DEFAULT_MAX_PW = 2400.
-                            minAngle:Target angle (in degrees) associated with minPulseWidth.
+                            minAngle:Target angle (in degrees) associated with minPulseWidth.  
                                  Defaults to SERVO_DEFAULT_MIN_ANGLE = 0.
-                            maxAngle:Target angle (in degrees) associated with maxPulseWidth.
+                            maxAngle:Target angle (in degrees) associated with maxPulseWidth.  
                                  Defaults to SERVO_DEFAULT_MAX_ANGLE = 180.
-  *Output		: none
-  *Return		: return true if successful, false when pin doesn't support PWM.
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		: none
+  *Output		: none       
+  *Return		: return true if successful, false when pin doesn't support PWM.    
+  *author		: lz       
+  *date			: 10-December-2014          
+  *Others		: none        
 **********************************************************************************/
-bool Servo::attach(uint16_t pin, uint16_t minPW, uint16_t maxPW, int16_t minAngle, int16_t maxAngle)
+bool Servo::attach(uint16_t pin, uint16_t minPW, uint16_t maxPW, int16_t minAngle, int16_t maxAngle) 
 {
     if (pin >= TOTAL_PINS || PIN_MAP[pin].timer_peripheral == NULL)
     {
@@ -193,18 +193,18 @@ bool Servo::attach(uint16_t pin, uint16_t minPW, uint16_t maxPW, int16_t minAngl
 }
 
 /*********************************************************************************
-  *Function		: bool detach(void)
+  *Function		: bool detach(void)       
   *Description	: Stop driving the servo pulse train. If not currently attached to a motor, this function has no effect.
-  *Input		      : none
-  *Output		: none
+  *Input		      : none       
+  *Output		: none    
   *Return		: return true if this call did anything, false otherwise.
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		:
+  *author		: lz       
+  *date			: 10-December-2014             
+  *Others		:         
 **********************************************************************************/
-bool Servo::detach(void)
+bool Servo::detach(void) 
 {
-    if (!this->attached())
+    if (!this->attached()) 
     {
         return false;
     }
@@ -216,61 +216,61 @@ bool Servo::detach(void)
 }
 
 /*********************************************************************************
-  *Function		: bool attached(void) const
+  *Function		: bool attached(void) const    
   *Description	: Check if this instance is attached to a servo.
-  *Input		      : none
-  *Output		: none
+  *Input		      : none       
+  *Output		: none    
   *Return		: return true if this instance is attached to a servo, false otherwise.
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		:
+  *author		: lz       
+  *date			: 10-December-2014             
+  *Others		:         
 **********************************************************************************/
-bool Servo::attached(void) const
-{
-    return this->pin != NOT_ATTACHED;
+bool Servo::attached(void) const 
+{ 
+    return this->pin != NOT_ATTACHED; 
 }
 
 /*********************************************************************************
-  *Function		: int attachedPin(void) const
+  *Function		: int attachedPin(void) const  
   *Description	: Get the pin this instance is attached to.
-  *Input		      : none
-  *Output		: none
+  *Input		      : none       
+  *Output		: none    
   *Return		: return Pin number if currently attached to a pin, NOT_ATTACHED otherwise.
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		:
+  *author		: lz       
+  *date			: 10-December-2014             
+  *Others		:         
 **********************************************************************************/
-int Servo::attachedPin(void) const
-{
-    return this->pin;
+int Servo::attachedPin(void) const 
+{ 
+    return this->pin; 
 }
 
 /*********************************************************************************
-  *Function		: void write(int degrees)
-  *Description	: angle Target angle, in degrees.
+  *Function		: void write(int degrees)      
+  *Description	: angle Target angle, in degrees.  
                             If the target angle is outside the range specified at attach() time, it will be clamped to lie in that range.
-  *Input		      : degrees: value
-  *Output		: none
-  *Return		: none
-  *author		: lz
-  *data			: 10-December-2014
-  *Others		:
+  *Input		      : degrees: value        
+  *Output		: none        
+  *Return		: none   
+  *author		: lz   
+  *data			: 10-December-2014         
+  *Others		:         
 **********************************************************************************/
-void Servo::write(int degrees)
+void Servo::write(int degrees) 
 {
     degrees = constrain(degrees, this->minAngle, this->maxAngle);
     this->writeMicroseconds(ANGLE_TO_US(degrees));
 }
 
 /*********************************************************************************
-  *Function		: int read(void) const
-  *Description	: Get the servomotor's target angle, in degrees.  This will lie inside the range specified at attach() time.
-  *Input		      : none
-  *Output		: none
-  *Return		: the angle value
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		:
+  *Function		: int read(void) const      
+  *Description	: Get the servomotor's target angle, in degrees.  This will lie inside the range specified at attach() time.   
+  *Input		      : none         
+  *Output		: none    
+  *Return		: the angle value    
+  *author		: lz      
+  *date			: 10-December-2014          
+  *Others		:         
 **********************************************************************************/
 int Servo::read(void) const
 {
@@ -282,19 +282,19 @@ int Servo::read(void) const
 }
 
 /*********************************************************************************
-  *Function		: void writeMicroseconds(uint16_t pulseWidth)
-  *Description	:  pulseWidth Pulse width to send to the servomotor, in microseconds.
+  *Function		: void writeMicroseconds(uint16_t pulseWidth)        
+  *Description	:  pulseWidth Pulse width to send to the servomotor, in microseconds. 
                              If outside of the range specified at attach() time, it is clamped tolie in that range.
-  *Input		      : pulseWidth: the pulseWidth value
-  *Output		: none
-  *Return		: none
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		:
+  *Input		      : pulseWidth: the pulseWidth value     
+  *Output		: none        
+  *Return		: none       
+  *author		: lz       
+  *date			: 10-December-2014            
+  *Others		:         
 **********************************************************************************/
-void Servo::writeMicroseconds(uint16_t pulseWidth)
+void Servo::writeMicroseconds(uint16_t pulseWidth) 
 {
-    if (!this->attached())
+    if (!this->attached()) 
     {
         return;
     }
@@ -323,18 +323,18 @@ void Servo::writeMicroseconds(uint16_t pulseWidth)
 }
 
 /*********************************************************************************
-  *Function		: uint16_t  readMicroseconds() const
+  *Function		: uint16_t  readMicroseconds() const         
   *Description	: Get the current pulse width, in microseconds.  This will lie within the range specified at attach() time.
-  *Input		      : none
-  *Output		: none
-  *Return		: the value of current pulse width
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		:
+  *Input		      : none     
+  *Output		: none        
+  *Return		: the value of current pulse width     
+  *author		: lz       
+  *date			: 10-December-2014            
+  *Others		:         
 **********************************************************************************/
 uint16_t Servo::readMicroseconds(void) const
 {
-    if (!this->attached())
+    if (!this->attached()) 
     {
         return 0;
     }
@@ -364,16 +364,16 @@ uint16_t Servo::readMicroseconds(void) const
 
 
 /*********************************************************************************
-  *Function		: void resetFields(void)
-  *Description	: initialize
-  *Input		      : none
-  *Output		: none
-  *Return		: none
-  *author		: lz
-  *date			: 10-December-2014
-  *Others		:
+  *Function		: void resetFields(void)        
+  *Description	: initialize  
+  *Input		      : none        
+  *Output		: none    
+  *Return		: none   
+  *author		: lz   
+  *date			: 10-December-2014          
+  *Others		:         
 **********************************************************************************/
-void Servo::resetFields(void)
+void Servo::resetFields(void) 
 {
     this->pin = NOT_ATTACHED;
     this->minAngle = SERVO_DEFAULT_MIN_ANGLE;

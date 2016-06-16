@@ -105,13 +105,13 @@ extern volatile uint8_t intorobot_cloud_socketed_flag;
 extern volatile uint8_t intorobot_cloud_connected_flag;
 
 
-#define INTOROBOT_BOARD_TYPE    "88880001" //sevice info
+#define INTOROBOT_BOARD_TYPE1    "888001" //sevice info
+#define INTOROBOT_BOARD_TYPE2    "887001"
 
-
-#define INTOROBOT_WIFICHECK_FAIL_PERIOD_MILLIS	        0
+#define INTOROBOT_WIFICHECK_FAIL_PERIOD_MILLIS	        1000
 #define INTOROBOT_WIFICHECK_SUCC_PERIOD_MILLIS          30000      //*30sec
 
-#define INTOROBOT_MQTTCONNECT_SHORT_PERIOD_MILLIS       0
+#define INTOROBOT_MQTTCONNECT_SHORT_PERIOD_MILLIS       1000
 #define INTOROBOT_MQTTCONNECT_LONG_PERIOD_MILLIS        15000      //*15sec
 
 #define INTOROBOT_SHORT_TO_LONG_MAC_COUNT			    20
@@ -235,6 +235,7 @@ extern IntorobotClass IntoRobot;
 extern "C" {
 #endif
 
+String clientId(void);
 String deviceSn(void);
 //subscribe topic info
 CB getsubcallback(char * fulltopic);

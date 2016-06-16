@@ -4,7 +4,7 @@
  * @author   : robin
  * @version  : V1.0.0
  * @date     : 6-December-2014
- * @brief    :
+ * @brief    :      
  ******************************************************************************
   Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
 
@@ -48,14 +48,14 @@ extern unsigned long __fini_array_end;
 
 static void call_constructors(unsigned long *start, unsigned long *end) __attribute__((noinline));
 /*********************************************************************************
-  *Function		:
-  *Description	:
-  *Input		:
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Function		:       
+  *Description	:   
+  *Input		:          
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 static void call_constructors(unsigned long *start, unsigned long *end)
 {
@@ -70,14 +70,14 @@ static void call_constructors(unsigned long *start, unsigned long *end)
 
 extern "C" {
 /*********************************************************************************
-  *Function		:
-  *Description	:
-  *Input		:
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Function		:       
+  *Description	:   
+  *Input		:          
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 void CallConstructors(void)
 {
@@ -96,14 +96,14 @@ void *__dso_handle = NULL;
  * Implement C++ new/delete operators using the heap
  */
 /*********************************************************************************
-  *Function		:
-  *Description	:
-  *Input		:
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Function		:       
+  *Description	:   
+  *Input		:          
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 void *operator new(size_t size)
 {
@@ -116,14 +116,14 @@ void *operator new[](size_t size)
 }
 
 /*********************************************************************************
-  *Function		:
-  *Description	:
-  *Input		:
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Function		:       
+  *Description	:   
+  *Input		:          
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 void operator delete(void *p)
 {
@@ -134,9 +134,9 @@ void operator delete[](void *p)
 {
 	free(p);
 }
+
 extern "C" {
 
-#if 1
 /******************************************************
  * System call reference with suggested stubs:
  * http://sourceware.org/newlib/libc.html#Syscalls
@@ -192,7 +192,7 @@ int _getpid(void)
 {
 	return 1;
 }
-#endif
+
 
 #ifdef __CS_SOURCERYGXX_REV__
 #if USE_UART_FOR_STDIO
@@ -214,14 +214,14 @@ int _getpid(void)
  Returns -1 on error or number of bytes sent
  */
 /*********************************************************************************
-  *Function		:
-  *Description	:
-  *Input		:
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Function		:       
+  *Description	:   
+  *Input		:          
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 int _write(int file, char *ptr, int len) {
     int n;

@@ -4,7 +4,7 @@
  * @author   : robin
  * @version  : V1.0.0
  * @date     : 6-December-2014
- * @brief    :   
+ * @brief    :
  ******************************************************************************
   Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
 
@@ -31,7 +31,8 @@
 #include "lib_tcpserver.h"
 #include "lib_process.h"
 
-
+// Maximum size of ap list string
+#define AP_LIST_MAX_LENGTH 2000
 // Maximum size of a SSID
 #define WL_SSID_MAX_LENGTH 32
 // Size of a MAC-address or BSSID
@@ -48,7 +49,7 @@
 #define ENC_TYPE_NONE  4
 
 
-class WiFiClass : public Process 
+class WiFiClass : public Process
 {
     private:
         // settings of current selected network
@@ -66,6 +67,7 @@ class WiFiClass : public Process
         uint8_t status(void);
 
         uint8_t setCredentials(const char *ssid);
+        uint8_t setCredentials(const char *ssid, const char *password);
         uint8_t setCredentials(const char *ssid, const char *password, const char *channel, const char *security);
 
         void config(IPAddress local_ip);
@@ -94,6 +96,7 @@ class WiFiClass : public Process
         uint8_t encryptionType(void);
 
         int8_t scanNetworks(void);
+        bool getApList(char *aplist);
         void restartNetwork(void);
         char* SSID(uint8_t networkItem);
         uint8_t* BSSID(uint8_t networkItem, uint8_t* bssid);

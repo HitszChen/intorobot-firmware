@@ -4,7 +4,7 @@
  * @author   : robin
  * @version  : V1.0.0
  * @date      : 6-December-2014
- * @brief      :
+ * @brief      :  
  ******************************************************************************
   Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
 
@@ -49,7 +49,7 @@
 #endif
 
 // The aJson structure:
-typedef struct aJsonObject
+typedef struct aJsonObject 
 {
     char *name; // The item's name string, if this item is the child of, or is in the list of subitems of an object.
     struct aJsonObject *next, *prev; // next/prev allow you to walk array/object chains. Alternatively, use GetArraySize/GetArrayItem/GetObjectItem
@@ -57,7 +57,7 @@ typedef struct aJsonObject
 
     char type; // The type of the item, as above.
 
-    union
+    union 
     {
         char *valuestring; // The item's string, if type==aJson_String
         char valuebool; //the items value for true & false
@@ -70,7 +70,7 @@ typedef struct aJsonObject
  * it is meant to abstract out differences between Stream (e.g. serial
  * stream) and Client (which may or may not be connected) or provide even
  * stream-ish interface to string buffers. */
-class aJsonStream : public Print
+class aJsonStream : public Print 
 {
     public:
         aJsonStream(Stream *stream_): stream_obj(stream_), bucket(EOF) {}
@@ -131,7 +131,7 @@ class aJsonStream : public Print
 /* JSON stream that is bound to input and output string buffer. This is
  * for internal usage by string-based aJsonClass methods. */
 /* TODO: Elastic output buffer support. */
-class aJsonStringStream : public aJsonStream
+class aJsonStringStream : public aJsonStream 
 {
     public:
         /* Either of inbuf, outbuf can be NULL if you do not care about
@@ -153,7 +153,7 @@ class aJsonStringStream : public aJsonStream
 };
 
 
-class aJsonClass
+class aJsonClass 
 {
         /******************************************************************************
         * Constructors

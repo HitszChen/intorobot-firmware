@@ -4,7 +4,7 @@
  * @author   : robin
  * @version  : V1.0.0
  * @date     : 6-December-2014
- * @brief    :     
+ * @brief    :
  ******************************************************************************
   Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
 
@@ -33,10 +33,10 @@
   *Return             :
   *author             :
   *date                :
-  *Others             :    
+  *Others             :
 **********************************************************************************/
 TcpClient::TcpClient(int _h, BridgeClass &_b) :
-    bridge(_b), handle(_h), opened(true), buffered(0) 
+    bridge(_b), handle(_h), opened(true), buffered(0)
 {
 }
 
@@ -52,35 +52,35 @@ TcpClient::TcpClient(int _h, BridgeClass &_b) :
   *Others             :
 **********************************************************************************/
 TcpClient::TcpClient(BridgeClass &_b) :
-    bridge(_b), handle(0), opened(false), buffered(0) 
+    bridge(_b), handle(0), opened(false), buffered(0)
 {
 }
 
 /*********************************************************************************
-  *Function           :  TcpClient::~TcpClient() 
+  *Function           :  TcpClient::~TcpClient()
   *Description       :  constructor function
   *Input               :
   *Output             :
   *Return             :
   *author             :
   *date                :
-  *Others             : 
+  *Others             :
 **********************************************************************************/
-TcpClient::~TcpClient() 
+TcpClient::~TcpClient()
 {
 }
 
 /*********************************************************************************
-  *Function           :  TcpClient& TcpClient::operator=(const TcpClient &_x) 
+  *Function           :  TcpClient& TcpClient::operator=(const TcpClient &_x)
   *Description       :
   *Input               :
   *Output             :
   *Return             :
   *author             :
   *date                :
-  *Others             :   
+  *Others             :
 **********************************************************************************/
-TcpClient& TcpClient::operator=(const TcpClient &_x) 
+TcpClient& TcpClient::operator=(const TcpClient &_x)
 {
     opened = _x.opened;
     handle = _x.handle;
@@ -88,7 +88,7 @@ TcpClient& TcpClient::operator=(const TcpClient &_x)
 }
 
 /*********************************************************************************
-  *Function           :  void TcpClient::stop(void) 
+  *Function           :  void TcpClient::stop(void)
   *Description       :  Disconnect from the server.
   *Input               :  none
   *Output             :  none
@@ -97,9 +97,9 @@ TcpClient& TcpClient::operator=(const TcpClient &_x)
   *date                :  2015-02-01
   *Others             :
 **********************************************************************************/
-void TcpClient::stop(void) 
+void TcpClient::stop(void)
 {
-    if (opened) 
+    if (opened)
     {
         uint8_t cmd[] = {'j', handle};
         bridge.transfer(cmd, 2);
@@ -108,16 +108,16 @@ void TcpClient::stop(void)
 }
 
 /*********************************************************************************
-  *Function           :  void TcpClient::doBuffer(void) 
-  *Description       :  
+  *Function           :  void TcpClient::doBuffer(void)
+  *Description       :
   *Input               :
   *Output             :
   *Return             :
   *author             :
   *date                :
-  *Others             : 
+  *Others             :
 **********************************************************************************/
-void TcpClient::doBuffer(void) 
+void TcpClient::doBuffer(void)
 {
     // If there are already char in buffer exit
     if (buffered > 0)
@@ -130,17 +130,17 @@ void TcpClient::doBuffer(void)
 }
 
 /*********************************************************************************
-  *Function           :  int TcpClient::available(void) 
-  *Description       :  Returns the number of bytes available for reading (that is, the amount of data 
+  *Function           :  int TcpClient::available(void)
+  *Description       :  Returns the number of bytes available for reading (that is, the amount of data
                               that has been written to the client by the server it is connected to).
   *Input               :  none
-  *Output             :  none 
+  *Output             :  none
   *Return             :  The number of bytes available.
   *author             :  robot
   *date                :  2015-02-01
   *Others             :
 **********************************************************************************/
-int TcpClient::available(void) 
+int TcpClient::available(void)
 {
     // Look if there is new data available
     doBuffer();
@@ -148,7 +148,7 @@ int TcpClient::available(void)
 }
 
 /*********************************************************************************
-  *Function           :  int TcpClient::read(void) 
+  *Function           :  int TcpClient::read(void)
   *Description       :  Read the next byte received from the server the client is connected to (after the last call to read()).
                               read() inherits from the Stream utility class.
   *Input               :   none
@@ -158,12 +158,12 @@ int TcpClient::available(void)
   *date                :   2015-02-01
   *Others             :
 **********************************************************************************/
-int TcpClient::read(void) 
+int TcpClient::read(void)
 {
     doBuffer();
     if (buffered == 0)
     return -1; // no chars available
-    else 
+    else
     {
         buffered--;
         return buffer[readPos++];
@@ -171,21 +171,21 @@ int TcpClient::read(void)
 }
 
 /*********************************************************************************
-  *Function           :  int TcpClient::read(uint8_t *buff, size_t size) 
+  *Function           :  int TcpClient::read(uint8_t *buff, size_t size)
   *Description       :
   *Input               :
   *Output             :
   *Return             :
   *author             :
   *date                :
-  *Others             : 
+  *Others             :
 **********************************************************************************/
-int TcpClient::read(uint8_t *buff, size_t size) 
+int TcpClient::read(uint8_t *buff, size_t size)
 {
     size_t readed = 0;
-    do 
+    do
     {
-        if (buffered == 0) 
+        if (buffered == 0)
         {
         doBuffer();
         if (buffered == 0)
@@ -198,18 +198,18 @@ int TcpClient::read(uint8_t *buff, size_t size)
 }
 
 /*********************************************************************************
-  *Function           :  int TcpClient::peek(void) 
-  *Description       :  Read a byte from the file without advancing to the next one. 
-                             That is, successive calls to peek() will return the same value, 
+  *Function           :  int TcpClient::peek(void)
+  *Description       :  Read a byte from the file without advancing to the next one.
+                             That is, successive calls to peek() will return the same value,
                              as will the next call to read().
   *Input               :  none
   *Output             :  none
   *Return             :  int : the first byte of incoming data available (or -1 if no data is available)
   *author             :  robot
   *date                :  2015-02-01
-  *Others             :    
+  *Others             :
 **********************************************************************************/
-int TcpClient::peek(void) 
+int TcpClient::peek(void)
 {
     doBuffer();
     if (buffered == 0)
@@ -219,16 +219,16 @@ int TcpClient::peek(void)
 }
 
 /*********************************************************************************
-  *Function           :  size_t TcpClient::write(uint8_t c) 
+  *Function           :  size_t TcpClient::write(uint8_t c)
   *Description       :  Write data to the server the client is connected to.
   *Input               :  data: the byte or char to write
   *Output             :  none
   *Return             :  byte: the number of characters written. it is not necessary to read this value.
   *author             :  robot
   *date                :  2015-02-01
-  *Others             :    
+  *Others             :
 **********************************************************************************/
-size_t TcpClient::write(uint8_t c) 
+size_t TcpClient::write(uint8_t c)
 {
     if (!opened)
         return 0;
@@ -238,16 +238,16 @@ size_t TcpClient::write(uint8_t c)
 }
 
 /*********************************************************************************
-  *Function           :  size_t TcpClient::write(const uint8_t *buf, size_t size) 
+  *Function           :  size_t TcpClient::write(const uint8_t *buf, size_t size)
   *Description       :
   *Input               :
   *Output             :
   *Return             :
   *author             :
   *date                :
-  *Others             :     
+  *Others             :
 **********************************************************************************/
-size_t TcpClient::write(const uint8_t *buf, size_t size) 
+size_t TcpClient::write(const uint8_t *buf, size_t size)
 {
     if (!opened)
         return 0;
@@ -257,7 +257,7 @@ size_t TcpClient::write(const uint8_t *buf, size_t size)
 }
 
 /*********************************************************************************
-  *Function           :  void TcpClient::flush(void) 
+  *Function           :  void TcpClient::flush(void)
   *Description       :  Discard any bytes that have been written to the client but not yet read.
   *Input               :  none
   *Output             :  none
@@ -266,13 +266,13 @@ size_t TcpClient::write(const uint8_t *buf, size_t size)
   *date                :  2015-02-01
   *Others             :
 **********************************************************************************/
-void TcpClient::flush(void) 
+void TcpClient::flush(void)
 {
 }
 
 /*********************************************************************************
-  *Function           :  uint8_t TcpClient::connected(void) 
-  *Description       :  Whether or not the client is connected. Note that a client is considered connected 
+  *Function           :  uint8_t TcpClient::connected(void)
+  *Description       :  Whether or not the client is connected. Note that a client is considered connected
                               if the connection has been closed but there is still unread data.
   *Input               :   none
   *Output             :   none
@@ -281,7 +281,7 @@ void TcpClient::flush(void)
   *date                :   2015-02-01
   *Others             :
 **********************************************************************************/
-uint8_t TcpClient::connected(void) 
+uint8_t TcpClient::connected(void)
 {
     if (!opened)
         return false;
@@ -292,8 +292,8 @@ uint8_t TcpClient::connected(void)
 }
 
 /*********************************************************************************
-  *Function           :  int TcpClient::connect(IPAddress ip, uint16_t port) 
-  *Description       :  Connects to a specified IP address and port. The return value indicates success or failure. 
+  *Function           :  int TcpClient::connect(IPAddress ip, uint16_t port)
+  *Description       :  Connects to a specified IP address and port. The return value indicates success or failure.
                               Also supports DNS lookups when using a domain name.
   *Input               :   ip: the IP address that the client will connect to (array of 4 bytes)
                               port: the port that the client will connect to (int)
@@ -301,9 +301,9 @@ uint8_t TcpClient::connected(void)
   *Return             :   Returns true if the connection succeeds, false if not.
   *author             :   robot
   *date                :   2015-02-01
-  *Others             :       
+  *Others             :
 **********************************************************************************/
-int TcpClient::connect(IPAddress ip, uint16_t port) 
+int TcpClient::connect(IPAddress ip, uint16_t port)
 {
     String address;
     address.reserve(18);
@@ -318,8 +318,8 @@ int TcpClient::connect(IPAddress ip, uint16_t port)
 }
 
 /*********************************************************************************
-  *Function           :  int TcpClient::connect(const char *host, uint16_t port) 
-  *Description       :  Connects to a specified IP address and port. The return value indicates success or failure. 
+  *Function           :  int TcpClient::connect(const char *host, uint16_t port)
+  *Description       :  Connects to a specified IP address and port. The return value indicates success or failure.
                               Also supports DNS lookups when using a domain name.
   *Input               :  host:  the domain name the client will connect to (string, ex.:"arduino.cc")
                              port: the port that the client will connect to (int)
@@ -327,11 +327,11 @@ int TcpClient::connect(IPAddress ip, uint16_t port)
   *Return             :  Returns true if the connection succeeds, false if not.
   *author             :  robot
   *date                :  2015-02-01
-  *Others             :    
+  *Others             :
 **********************************************************************************/
-int TcpClient::connect(const char *host, uint16_t port) 
+int TcpClient::connect(const char *host, uint16_t port)
 {
-    uint8_t tmp[] = 
+    uint8_t tmp[] =
     {
         'C',
         (uint8_t)((port >> 8) & 0xFF),
@@ -346,7 +346,7 @@ int TcpClient::connect(const char *host, uint16_t port)
     // wait for connection
     uint8_t tmp2[] = { 'c', handle };
     uint8_t res2[1];
-    while (true) 
+    while (true)
     {
         bridge.transfer(tmp2, 2, res2, 1);
         if (res2[0] == 0)

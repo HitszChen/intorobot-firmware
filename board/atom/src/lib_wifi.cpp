@@ -112,9 +112,23 @@ void WiFiClass::restartNetwork(void)
 **********************************************************************************/
 uint8_t WiFiClass::setCredentials(const char *ssid)
 {
-    return setCredentials(ssid, "", "auto", "NONE");
+    return setCredentials(ssid, "");
 }
 
+/*********************************************************************************
+  *Function     :
+  *Description  :   set che wifi  credentials.  <------- Deprecated
+  *Input        :
+  *Output       :
+  *Return       :
+  *author       :
+  *date         :
+  *Others       :
+**********************************************************************************/
+uint8_t WiFiClass::setCredentials(const char *ssid, const char *password)
+{
+    return setCredentials(ssid, password, "auto", "NONE");
+}
 /*********************************************************************************
   *Function     :
   *Description  :   set che wifi  credentials
@@ -707,6 +721,37 @@ int8_t WiFiClass::scanNetworks(void)
     return numOfNetworks;
 }
 
+/*********************************************************************************
+  *Function     :
+  *Description  :   Start scan Access Point and Return Ap list in sub-Jason format
+  *Input        :
+  *Output       :
+  *Return       :   String of Ap List
+  *author       :
+  *date         :
+  *Others       :
+**********************************************************************************/
+bool WiFiClass::getApList(char * aplist)
+{
+    String tmp;
+
+    memset(aplist,0,sizeof(aplist));
+    begin("wifi_get_ap_list");
+    addParameter("LISTALL");
+    int res = run();
+    if(res == 0)
+    {
+        while (available())
+        {
+            tmp+=(char)read();
+        }
+        if(tmp.length()<AP_LIST_MAX_LENGTH)  //can be a bug here
+        {strcpy(aplist,tmp.c_str());}
+        else
+        {memcpy(aplist,tmp.c_str(), AP_LIST_MAX_LENGTH-1);}
+    }
+    return true;
+}
 /*********************************************************************************
   *Function     :
   *Description  :   Return the SSID discovered during the network scan.

@@ -4,7 +4,7 @@
  * @author   : robin
  * @version  : V1.0.0
  * @date     : 6-December-2014
- * @brief    :
+ * @brief    :   
  ******************************************************************************
   Copyright (c) 2013-2014 IntoRobot Team.  All right reserved.
 
@@ -23,11 +23,12 @@
   ******************************************************************************
  */
 
-
+  
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "debug.h"
 #include "stm32_it.h"
+#include "ros.h"
 
 extern "C" {
 #include "usb_conf.h"
@@ -35,6 +36,8 @@ extern "C" {
 #include "usb_desc.h"
 #include "usb_pwr.h"
 #include "usb_prop.h"
+
+
 }
 
 /* Private typedef -----------------------------------------------------------*/
@@ -281,19 +284,19 @@ void assert_failed(uint8_t* file, uint32_t line)
 static volatile system_tick_t system_1ms_tick = 0;
 
 /*********************************************************************************
-  *Function		:
+  *Function		:       
   *Description	:    main
-  *Input		      :
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Input		      :    
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 void System1MsTick(void)
 {
-    system_1ms_tick++;
-
+    system_1ms_tick++;  
+    
 #ifdef IWDG_RESET_ENABLE
 	if (TimingIWDGReload >= TIMING_IWDG_RELOAD)
 	{
@@ -309,14 +312,14 @@ void System1MsTick(void)
 }
 
 /*********************************************************************************
-  *Function		:    system_tick_t GetSystem1MsTick(void)
+  *Function		:    system_tick_t GetSystem1MsTick(void)   
   *Description	:    get system 1ms tick
-  *Input		      :
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Input		      :    
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 system_tick_t GetSystem1MsTick(void)
 {
@@ -324,14 +327,14 @@ system_tick_t GetSystem1MsTick(void)
 }
 
 /*********************************************************************************
-  *Function		:
+  *Function		:       
   *Description	:    main
-  *Input		      :
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
-  *Others		:
+  *Input		      :    
+  *Output		:         
+  *Return		:        
+  *author		:        
+  *date			:           
+  *Others		:         
 **********************************************************************************/
 int main(void)
 {
@@ -366,7 +369,7 @@ int main(void)
 #ifdef INTOROBOT_WLAN_ENABLE
         }
 #endif
-#endif
+#endif 
     }
 
 }

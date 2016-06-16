@@ -53,7 +53,7 @@ struct _system_param
 	char server[28];
 	float zone;
 
-	char join_mode;
+	char at_mode;
 	char sv_select;
 	char sv_domain[52];
 	int sv_port;

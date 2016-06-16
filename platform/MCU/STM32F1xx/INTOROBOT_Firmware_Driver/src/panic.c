@@ -59,8 +59,8 @@ void panic_(ePanicCode code)
 {
 	__disable_irq();
 	// Flush any serial message to help the poor bugger debug this;
-	//flash_codes_t pcd = flash_codes[code];
-	//uint16_t c;
+	flash_codes_t pcd = flash_codes[code];
+	uint16_t c;
 	int loops = 2;
 	if (debug_output_)(debug_output_("!"));
 	while(loops) {

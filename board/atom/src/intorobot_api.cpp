@@ -32,7 +32,7 @@
 
 //firmware  info
 //#define INTOROBOT_FIRMWARE_LIB_VER  "1.0.1"
-#define INTOROBOT_FIRMWARE_LIB_VER  "2016033000"
+#define INTOROBOT_FIRMWARE_LIB_VER  "2016060300"
 #define INTOROBOT_API_VER       "v1"
 //board type
 #define INTOROBOT_BOARD_TYPE    "88880001"
@@ -528,8 +528,8 @@ void IntorobotClass::process(void)
                 {intorobot_mqttconnect_short_to_long_count++;}
 
                 DEBUG("cloud connecting");
-                String fulltopic;
-                char temp[256];
+                String fulltopic, clientid;
+                char temp[64];
 
                 //disconnect intorobot cloud
                 if(ApiMqttClient.connected())
@@ -546,12 +546,15 @@ void IntorobotClass::process(void)
                 { ApiMqttClient.setMqtt(intorobot_system_param.sv_domain, intorobot_system_param.sv_port); }
                 //mqtt connect
                 memset(temp,0,sizeof(temp));
-                strcpy(temp,&intorobot_system_param.device_id[1]);
+                clientid = clientId();
+                strcpy(temp, clientid.c_str());
+                DEBUG("clientid     =   %s", clientid.c_str());
                 if(ApiMqttClient.connect(temp, intorobot_system_param.access_token, intorobot_system_param.device_id, fulltopic.c_str(), INTOROBOT_MQTT_WILLQOS, INTOROBOT_MQTT_WILLRETAIN, INTOROBOT_MQTT_WILLMESSAGE))
                 {
                     DEBUG("cloud connected");
                     char sys_ver[32]="0.0.0.0";
                     firmwareupdate.openwrt_firmware_version(sys_ver);
+                    DEBUG("sys_version  =  %s", sys_ver);
                     //publish  device info
                     memset(temp,0,sizeof(temp));
                     sprintf(temp,"{\"fw_ver\":\"%s\",\"sys_ver\":\"%s\"}", INTOROBOT_FIRMWARE_LIB_VER, sys_ver);
@@ -731,6 +734,37 @@ int IntorobotClass::read(void)
 int IntorobotClass::available(void)
 {
     return (unsigned int)(Cloud_DEBUG_BUFFER_SIZE + Debug_rx_buffer.head - Debug_rx_buffer.tail) % Cloud_DEBUG_BUFFER_SIZE;
+}
+
+/*********************************************************************************
+  *Function		:    String clientId(void)
+  *Description	:    get a random clientId of 32 characters
+  *Input		      :
+  *Output		:
+  *Return		:
+  *author		:
+  *date			:
+  *Others		:
+**********************************************************************************/
+String clientId(void)
+{
+    char charset[62] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+                        'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+                        'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3',
+                        '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+                        'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                        'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                        'Y', 'Z'};
+    String clientid = "";
+    int randnum;
+
+    randomSeed(millis());
+    for (int i = 0; i < 32; i++) {
+         randnum = random(0, 62);
+         clientid.concat(charset[randnum]);
+    }
+
+    return clientid;
 }
 
 /*********************************************************************************
@@ -1072,6 +1106,7 @@ void stm32FwUpdateCallback(uint8_t *payload, uint32_t len)
     aJsonObject* dtoken_Object = aJson.getObjectItem(root, "dwn_token");
     if(dtoken_Object == NULL)
     {flag=1;}
+#if 0
     aJsonObject* type_Object = aJson.getObjectItem(root, "type");
     if(type_Object != NULL)
     {
@@ -1080,6 +1115,7 @@ void stm32FwUpdateCallback(uint8_t *payload, uint32_t len)
             flag=1;
         }
     }
+#endif
     if(0==flag)
     {
         if ((char)0xff == intorobot_system_param.sv_select)
@@ -1093,7 +1129,11 @@ void stm32FwUpdateCallback(uint8_t *payload, uint32_t len)
         url+=INTOROBOT_FW_UPDATE_URL;
         url+="?dwn_token=";
         url+=dtoken_Object->valuestring;
+#if 0
         DEBUG("type=%s,md5=%s,url=%s\r\n",type_Object->valuestring, md5_Object->valuestring,url.c_str());
+#else
+        DEBUG("md5=%s,url=%s\r\n", md5_Object->valuestring,url.c_str());
+#endif
         if(true==firmwareupdate.st_firmware_down(url.c_str(),  md5_Object->valuestring))
         {
             IntoRobot.publish(INTOROBOT_MQTT_RESPONSE_TOPIC, (uint8_t *)INTOROBOT_MQTT_RESMES_ST_FWDOWNSUCC, strlen(INTOROBOT_MQTT_RESMES_ST_FWDOWNSUCC),false);
@@ -1163,7 +1203,7 @@ void openwrtUpdateCallback(uint8_t *payload, uint32_t len)
         }
         url+=INTOROBOT_OW_UPDATE_URL;
         url+=sys_Ver_Object->valuestring;
-        if(!strcmp(type_Object->valuestring, INTOROBOT_BOARD_TYPE))
+        if(!strcmp(type_Object->valuestring, INTOROBOT_BOARD_TYPE1))
         {
             DEBUG("type=%s,sys_ver=%s,url=%s\r\n",type_Object->valuestring,sys_Ver_Object->valuestring,url.c_str());
             if(true==firmwareupdate.openwrt_firmware_down(sys_Ver_Object->valuestring, url.c_str()))
@@ -1465,7 +1505,7 @@ void intorobot_deviceconfig(void)
         }
         DEBUG("exit device config");
         DeviceConfigTcp.setDeviceConfig();
-        firmwareupdate.st_system_reset(); //重启
+        //firmwareupdate.st_system_reset();
     }
 #endif
 #endif
@@ -1512,19 +1552,19 @@ void intorobot_info_debug(void)
     DEBUG("server         = %s",intorobot_system_param.server);
     DEBUG("timezone       = %f",intorobot_system_param.zone);
 
-    DEBUG("join_mode   = %02x",intorobot_system_param.join_mode);
+    DEBUG("at_mode        = %02x",intorobot_system_param.at_mode);
     DEBUG("FIRMWARE_LIB_VER   = %s",INTOROBOT_FIRMWARE_LIB_VER);
-    String serail_num = deviceSn();
-    DEBUG("device_sn      = %s",serail_num.c_str());
 
     DEBUG("----------------------service info------------------------");
     DEBUG("sv_select       = %02x",intorobot_system_param.sv_select);
     if (intorobot_system_param.sv_select == (char)0xff) {
         DEBUG("service_domain   = %s",INTOROBOT_SERVER_DOMAIN);
         DEBUG("service_port     = %d",INTOROBOT_SERVER_PORT);
+        DEBUG("download_domain  = %s",INTOROBOT_UPDATE_URL);
     } else {
         DEBUG("service_domain   = %s", intorobot_system_param.sv_domain);
         DEBUG("service_port     = %d", intorobot_system_param.sv_port);
+        DEBUG("download_domain  = %s", intorobot_system_param.dw_domain);
     }
 }
 

@@ -45,7 +45,9 @@ namespace DeviceConfigType {
 		GETWIFILIST,    //get wifi list
 		SENDWIFIINFO,   //send wifi info
 		SENDDEVICEINFO, //send device info
+        GETDEVICEINFO,  //get initial info
 		INITDEVICEINFO, //init device info
+        CLEANDEVICEINFO,//clean device info
 		RESTARTNETWORK, //restart network
 		CHECKWIFI,      //check wifi connect
 		ERROR
@@ -72,14 +74,16 @@ public:
 	virtual void sendComfirm(int status);
 	void sendDeviceInfo(void);
 	void sendApScanList(void);
-	bool setWifiCredentials(char *ssid, char *password, char *channel, char *security);
+	//bool setWifiCredentials(char *ssid, char *password, char *channel, char *security);
+	bool setWifiCredentials(aJsonObject *value_Object);
 	bool setWrtTimezone(float time_zone);
-	void setDeviceBoundInfo(aJsonObject* value_Object);
+	void setDeviceBoundInfo(aJsonObject *value_Object);
 	void sendWifiStatus(void);
 	bool isNeedDeviceConfig(void);
 	bool setDeviceConfig(void);
 	bool clearDeviceConfig(void);
-	bool setDeviceInitInfo(aJsonObject* value_Object);
+    void sendInitInfo(void);
+    void cleanDeviceInfo(void);
 };
 
 class UsbDeviceConfig : public DeviceConfig

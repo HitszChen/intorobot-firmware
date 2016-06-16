@@ -56,9 +56,17 @@ DeviceConfigType::Enum DeviceConfig::getMessageType(char *s)
     {
         return DeviceConfigType::SENDDEVICEINFO;
     }
+	else if(0  == strcmp(s,"getInfo"))
+	{
+		return DeviceConfigType::GETDEVICEINFO;
+	}
 	else if(0  == strcmp(s,"initInfo"))
 	{
 		return DeviceConfigType::INITDEVICEINFO;
+	}
+	else if(0  == strcmp(s,"cleanInfo"))
+	{
+		return DeviceConfigType::CLEANDEVICEINFO;
 	}
     else if(0==strcmp(s,"restartNetwork"))
     {
@@ -116,20 +124,11 @@ bool DeviceConfig::process( void )
                     aJsonObject* value_Object = aJson.getObjectItem(root, "value");
                     if (value_Object == NULL)
                     {break;}
-                    aJsonObject* ssid_Object = aJson.getObjectItem(value_Object, "ssid");
-                    if (ssid_Object == NULL)
-                    {break;}
-                    aJsonObject* passwd_Object = aJson.getObjectItem(value_Object, "passwd");
-                    if (passwd_Object == NULL)
-                    {break;}
-                    aJsonObject* channel_Object = aJson.getObjectItem(value_Object, "channel");
-                    if (channel_Object == NULL)
-                    {break;}
-                    aJsonObject* security_Object = aJson.getObjectItem(value_Object, "security");
-                    if (security_Object == NULL)
-                    {break;}
-                    sendComfirm(200);
-                    setWifiCredentials(ssid_Object->valuestring, passwd_Object->valuestring, channel_Object->valuestring, security_Object->valuestring);
+                    bool ret = setWifiCredentials(value_Object);
+                    if (ret == true)
+                    {sendComfirm(200);}
+                    else
+                    {sendComfirm(201);}
                 }
                 break;
 
@@ -140,18 +139,31 @@ bool DeviceConfig::process( void )
                     {break;}
                     setDeviceBoundInfo(value_Object);
                     sendComfirm(200);
-                    delay(500);
                     _isConfigSuccessful=true;
                     close();
                 }
                 break;
-            case DeviceConfigType::INITDEVICEINFO:
+
+            case DeviceConfigType::GETDEVICEINFO:
+                sendInitInfo();
+                break;
+
+            case DeviceConfigType::INITDEVICEINFO://注入初始信息
                 {
                     aJsonObject* value_Object = aJson.getObjectItem(root, "value");
                     if (value_Object == NULL)
                     {break;}
-                    setDeviceInitInfo(value_Object);
+                    setDeviceBoundInfo(value_Object);
                     sendComfirm(200);
+                    delay(500);
+                    break;
+                }
+
+            case DeviceConfigType::CLEANDEVICEINFO: //清除设备信息
+                {
+                    cleanDeviceInfo();
+                    sendComfirm(200);
+                    delay(500);
                     break;
                 }
 
@@ -217,8 +229,6 @@ void DeviceConfig::sendComfirm(int status)
 **********************************************************************************/
 void DeviceConfig::sendDeviceInfo(void)
 {
-	int join_mode;
-	char temp;
     aJsonObject* root = aJson.createObject();
     if (root == NULL)
     {return;}
@@ -226,18 +236,25 @@ void DeviceConfig::sendDeviceInfo(void)
     aJson.addNumberToObject(root, "status", 200);
     aJson.addStringToObject(root, "product_id", intorobot_system_param.product_id);
     //intorobot atom
+    char device_id[25], board[7];
     String serail_num = deviceSn();
     aJson.addStringToObject(root, "device_sn", serail_num.c_str());
-	temp = intorobot_system_param.join_mode;
-	if ((char)0xff != temp) {
-		if ((char)0x1 == temp)
-		// smart_mode
-		{join_mode = 1;}
-		else
-		// AP_mode
-		{join_mode = 0;}
-		aJson.addNumberToObject(root, "join_mode", join_mode);
-	}
+    if ((char)0x1 != intorobot_system_param.at_mode) {
+        aJson.addStringToObject(root, "board", INTOROBOT_BOARD_TYPE2);
+        aJson.addNumberToObject(root, "at_mode", 0);
+    } else {
+        memset(board, 0, sizeof(board));
+        memcpy(board, intorobot_system_param.device_id, 6);
+        if(0 == strcmp(board, INTOROBOT_BOARD_TYPE2)) {
+            aJson.addStringToObject(root, "board", INTOROBOT_BOARD_TYPE2);
+        } else {
+            aJson.addStringToObject(root, "board", INTOROBOT_BOARD_TYPE1);
+        }
+        memset(device_id, 0, sizeof(device_id));
+        memcpy(device_id, intorobot_system_param.device_id, 24);
+        aJson.addStringToObject(root, "device_id", device_id);
+        aJson.addNumberToObject(root, "at_mode", 1);
+    }
     char* string = aJson.print(root);
     write((unsigned char *)string, strlen(string));
     DEBUG("send device info: %s\r\n",string);
@@ -258,10 +275,19 @@ void DeviceConfig::sendDeviceInfo(void)
 void DeviceConfig::sendApScanList(void)
 {
     int8_t numOfNetworks = WiFi.scanNetworks();
+    DEBUG("num:%d\r\n", numOfNetworks);
     if(numOfNetworks<0)
     {
         sendComfirm(201);
     }
+    else  //direct send all ap list
+    {
+        char aplist[AP_LIST_MAX_LENGTH]; //can be a bug here
+        WiFi.getApList(aplist); 
+        write((unsigned char *)aplist, strlen(aplist));
+        DEBUG("sendApScanList: %s\r\n",aplist);
+    }
+#if 0
     else
     {
         aJsonObject* root = aJson.createObject();
@@ -271,7 +297,7 @@ void DeviceConfig::sendApScanList(void)
         aJson.addNumberToObject(root, "listnum",numOfNetworks);
         aJsonObject* ssidlistarray = aJson.createArray();
         if (ssidlistarray == NULL)
-        {
+       {
             aJson.deleteItem(root);
             return;
         }
@@ -279,6 +305,7 @@ void DeviceConfig::sendApScanList(void)
 
         for(int n = 0; n < numOfNetworks; n++)
         {
+            DEBUG("n = %d\r\n", n);
             aJsonObject* ssid_object = aJson.createObject();
             if (ssid_object == NULL)
             {
@@ -286,8 +313,11 @@ void DeviceConfig::sendApScanList(void)
                 return;
             }
             aJson.addItemToArray(ssidlistarray, ssid_object);
+            DEBUG("n = %d\r\n", n);
             aJson.addStringToObject(ssid_object, "ssid", WiFi.SSID(n));
+            DEBUG("n = %d\r\n", n);
             aJson.addNumberToObject(ssid_object, "entype", (int)WiFi.encryptionType(n));
+            DEBUG("n = %d\r\n", n);
             aJson.addNumberToObject(ssid_object, "signal", (int)WiFi.RSSI(n));
         }
         char* string = aJson.print(root);
@@ -296,10 +326,11 @@ void DeviceConfig::sendApScanList(void)
         free(string);
         aJson.deleteItem(root);
     }
+#endif
 }
 
 /*********************************************************************************
-  *Function		:   bool DeviceConfig::setWifiCredentials(char *ssid, char *password, char *channel, char *security)
+  *Function		:   bool DeviceConfig::setWifiCredentials(aJsonObject *value)
   *Description	:   set the wifi credentials
   *Input              :
   *Output		:
@@ -308,24 +339,56 @@ void DeviceConfig::sendApScanList(void)
   *date			:
   *Others		:
 **********************************************************************************/
-bool DeviceConfig::setWifiCredentials(char *ssid, char *password, char *channel, char *security)
+bool DeviceConfig::setWifiCredentials(aJsonObject *value_Object)
 {
+    char *ssid = NULL, *password = NULL, *channel = NULL, *security = NULL;
+    aJsonObject *Object;
+
+    //ssid
+    Object = aJson.getObjectItem(value_Object, "ssid");
+    if (Object == NULL) {
+        return false;
+    } else {
+        ssid = Object->valuestring;
+    }
+    //passwd
+    Object = aJson.getObjectItem(value_Object, "passwd");
+    if (Object != (aJsonObject *)NULL) {
+        password = Object->valuestring;
+    }
+    //channel
+    Object = aJson.getObjectItem(value_Object, "channel");
+    if (Object != (aJsonObject *)NULL) {
+        channel = Object->valuestring;
+    }
+    //security
+    aJsonObject* security_Object = aJson.getObjectItem(value_Object, "security");
+    if (Object != (aJsonObject *)NULL) {
+        security = Object->valuestring;
+    }
+
     DEBUG("ssid:%s",ssid);
-    DEBUG("passwd:%s",password);
-    DEBUG("channel:%s",channel);
-    DEBUG("security:%s",security);
-    if(0==strcmp(security,""))  //密码为空
-    {WiFi.setCredentials(ssid);}
-    else
-    {WiFi.setCredentials(ssid, password, "auto", security);}
+    if (password != (char *)NULL)
+    {DEBUG("passwd:%s",password);}
+    if (channel != (char *)NULL)
+    {DEBUG("channel:%s",channel);}
+    if (security != (char *)NULL)
+    {DEBUG("security:%s",security);}
+
+    if(password == (char *)NULL) { //密码为空
+        WiFi.setCredentials(ssid);
+    } else if (security == (char *)NULL) { //安全性为空
+        WiFi.setCredentials(ssid, password);
+    } else {
+        WiFi.setCredentials(ssid, password, "auto", security);
+    }
     system_rgb_blink(0, 255, 255, 1000);
-    WiFi.connect();
+    //WiFi.connect();
     //WiFi.restartNetwork();
     delay(5000);
     system_rgb_blink(255, 0, 0, 1000);
     return true;
 }
-
 
 /*********************************************************************************
   *Function		:   bool DeviceConfig::setWrtTimezone(float time_zone)
@@ -370,22 +433,12 @@ bool DeviceConfig::setWrtTimezone(float time_zone)
   *date			:
   *Others		:
 **********************************************************************************/
-void DeviceConfig::setDeviceBoundInfo(aJsonObject* value_Object)
+void DeviceConfig::setDeviceBoundInfo(aJsonObject *value_Object)
 {
     int valueint;
-    char len, *valuestring;
+    char len, *valuestring, at_mode;
     float valuefloat;
-    aJsonObject* Object, *Object1, *Object2;
-    //device_id
-    Object = aJson.getObjectItem(value_Object, "device_id");
-    if (Object != (aJsonObject* )NULL) {
-        valuestring = Object->valuestring;
-        len=strlen(valuestring);
-        DEBUG("device_id:%s, length: %d", valuestring, len);
-        if(len > 48) {len = 48;}
-        memset(intorobot_system_param.device_id, 0, sizeof(intorobot_system_param.device_id));
-        memcpy(intorobot_system_param.device_id, valuestring,len);
-    }
+    aJsonObject *Object, *Object1, *Object2;
     //zone
     Object = aJson.getObjectItem(value_Object, "zone");
     if (Object != (aJsonObject* )NULL) {
@@ -396,15 +449,29 @@ void DeviceConfig::setDeviceBoundInfo(aJsonObject* value_Object)
         intorobot_system_param.zone = valuefloat;
         setWrtTimezone(valuefloat);     //设置wrt时区
     }
-    //access_token
-    Object = aJson.getObjectItem(value_Object, "access_token");
-    if (Object != (aJsonObject* )NULL) {
-        valuestring = Object->valuestring;
-        len=strlen(valuestring);
-        DEBUG("access_token:%s, length: %d", valuestring, len);
-        if(len>48) {len=48;}
-        memset(intorobot_system_param.access_token, 0, sizeof(intorobot_system_param.access_token));
-        memcpy(intorobot_system_param.access_token, valuestring,len);
+    //device_id and access_token
+    at_mode = intorobot_system_param.at_mode;
+    if ((char)0x1 != at_mode)
+    {
+        Object = aJson.getObjectItem(value_Object, "device_id");
+        Object1 = aJson.getObjectItem(value_Object, "access_token");
+        if (Object != (aJsonObject* )NULL && Object1 != (aJsonObject* )NULL) {
+            //device_id
+            valuestring = Object->valuestring;
+            len=strlen(valuestring);
+            DEBUG("device_id:%s, length: %d", valuestring, len);
+            if(len > 48) {len = 48;}
+            memset(intorobot_system_param.device_id, 0, sizeof(intorobot_system_param.device_id));
+            memcpy(intorobot_system_param.device_id, valuestring,len);
+            //access_token
+            valuestring = Object1->valuestring;
+            len=strlen(valuestring);
+            DEBUG("access_token:%s, length: %d", valuestring, len);
+            if(len > 48) {len = 48;}
+            memset(intorobot_system_param.access_token, 0, sizeof(intorobot_system_param.access_token));
+            memcpy(intorobot_system_param.access_token, valuestring,len);
+            intorobot_system_param.at_mode = (char)0x1;
+        }
     }
     //domain and port
     Object = aJson.getObjectItem(value_Object, "sv_domain");
@@ -415,7 +482,7 @@ void DeviceConfig::setDeviceBoundInfo(aJsonObject* value_Object)
         valuestring = Object->valuestring;
         len=strlen(valuestring);
         DEBUG("sv_domain:%s", valuestring);
-        if(len>48) {len=48;}
+        if(len > 48) {len = 48;}
         memset(intorobot_system_param.sv_domain, 0, sizeof(intorobot_system_param.sv_domain));
         memcpy(intorobot_system_param.sv_domain, valuestring, len);
         //port
@@ -426,7 +493,7 @@ void DeviceConfig::setDeviceBoundInfo(aJsonObject* value_Object)
         valuestring = Object2->valuestring;
         len=strlen(valuestring);
         DEBUG("dw_domain:%s", valuestring);
-        if(len>48) {len=48;}
+        if(len > 48) {len = 48;}
         memset(intorobot_system_param.dw_domain, 0, sizeof(intorobot_system_param.dw_domain));
         memcpy(intorobot_system_param.dw_domain, valuestring, len);
 
@@ -557,69 +624,52 @@ bool DeviceConfig::clearDeviceConfig(void)
 }
 
 /*********************************************************************************
-  *Function		:   bool DeviceConfig::setDeviceInitInfo(aJsonObject* value_Object)
-  *Description	:   set the device initial info
-  *Input              :
-  *Output		:
-  *Return		:
-  *author		:
-  *date			:
+  *Function		:   void DeviceConfig::sendDeviceInfo(void)
+  *Description	:   send the device info
+  *Input              :   none
+  *Output		:   none
+  *Return		:   none
+  *author		:   robot
+  *date			:   2015-02-01
   *Others		:
 **********************************************************************************/
-bool DeviceConfig::setDeviceInitInfo(aJsonObject* value_Object)
+void DeviceConfig::sendInitInfo(void)
 {
-    int valueint;
-    char len, *valuestring;
-    float valuefloat;
-    aJsonObject *Object, *Object1, *Object2;
+    aJsonObject* root = aJson.createObject();
+    if (root == NULL)
+    {return;}
 
-    //access_token
-    Object = aJson.getObjectItem(value_Object, "access_token");
-    if (Object != (aJsonObject* )NULL) {
-        valuestring = Object->valuestring;
-        len=strlen(valuestring);
-        DEBUG("access_token:%s, length: %d", valuestring, len);
-        if(len>48) {len=48;}
-        memset(intorobot_system_param.access_token, 0, sizeof(intorobot_system_param.access_token));
-        memcpy(intorobot_system_param.access_token, valuestring,len);
-        intorobot_system_param.join_mode = (char)0x01;
+    aJson.addNumberToObject(root, "status", 200);
+    aJson.addStringToObject(root, "board", INTOROBOT_BOARD_TYPE1);
+    //intorobot atom
+    if ((char)0x01 == intorobot_system_param.at_mode) {
+        aJson.addNumberToObject(root, "at_mode", 1);
     }
-    //zone
-    Object = aJson.getObjectItem(value_Object, "zone");
-    if (Object != (aJsonObject* )NULL) {
-        valuefloat = (Object->type==aJson_Int?(float)(Object->valueint):Object->valuefloat);
-        DEBUG("zone:%f", valuefloat);
-        if(valuefloat < -12 || valuefloat > 13)
-        {valuefloat = 8.0;}
-        intorobot_system_param.zone = valuefloat;
-        setWrtTimezone(valuefloat);     //设置wrt时区
+    else {
+        aJson.addNumberToObject(root, "at_mode", 0);
     }
-    //domain and port
-    Object = aJson.getObjectItem(value_Object, "sv_domain");
-    Object1 = aJson.getObjectItem(value_Object, "sv_port");
-    Object2 = aJson.getObjectItem(value_Object, "dw_domain");
-    if (Object != (aJsonObject* )NULL && Object1 != (aJsonObject* )NULL && Object2 != (aJsonObject* )NULL) {
-        //domain
-        valuestring = Object->valuestring;
-        len=strlen(valuestring);
-        DEBUG("sv_domain:%s", valuestring);
-        if(len>48) {len=48;}
-        memset(intorobot_system_param.sv_domain, 0, sizeof(intorobot_system_param.sv_domain));
-        memcpy(intorobot_system_param.sv_domain, valuestring, len);
-        //port
-        valueint = Object1->valueint;
-        DEBUG("sv_port:%d", valueint);
-        intorobot_system_param.sv_port = valueint;
-        //dw_domain
-        valuestring = Object2->valuestring;
-        len=strlen(valuestring);
-        DEBUG("dw_domain:%s", valuestring);
-        if(len>48) {len=48;}
-        memset(intorobot_system_param.dw_domain, 0, sizeof(intorobot_system_param.dw_domain));
-        memcpy(intorobot_system_param.dw_domain, valuestring, len);
+    char* string = aJson.print(root);
+    write((unsigned char *)string, strlen(string));
+    DEBUG("send device info: %s\r\n",string);
+    free(string);
+    aJson.deleteItem(root);
+}
 
-        intorobot_system_param.sv_select = (char)0x01;
-    }
+/*********************************************************************************
+  *Function		:   void DeviceConfig::cleanDeviceInfo(void)
+  *Description	:   clean the device info
+  *Input              :   none
+  *Output		:   none
+  *Return		:   none
+  *author		:   robot
+  *date			:   2016-05-09
+  *Others		:
+**********************************************************************************/
+void DeviceConfig::cleanDeviceInfo(void)
+{
+    memcpy(intorobot_system_param.access_token, "FFFFFFFFFFFFFFFFFFFFFFFF", 24);
+    memcpy(intorobot_system_param.device_id, "FFFFFFFFFFFFFFFFFFFFFFFF", 24);
+    intorobot_system_param.at_mode = 0xff;
     writeSystemParam(&intorobot_system_param);
 }
 
