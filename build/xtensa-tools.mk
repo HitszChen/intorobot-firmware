@@ -9,14 +9,19 @@ include $(COMMON_BUILD)/common-tools.mk
 
 
 # C 编译参数
-CFLAGS += -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections -DICACHE_FLASH
-
-#CFLAGS += -Os -g -Wpointer-arith -Wundef -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -ffunction-sections -fdata-sections  -DICACHE_FLASH
+ifeq ("$(MODULE)","bootloader")
+#CFLAGS += -O0 -g -mno-text-section-literals
+CFLAGS += -O0 -g -mtext-section-literals -D__ets__ -DICACHE_FLASH
+else
+CFLAGS += -Os -g -mtext-section-literals -ffunction-sections -fdata-sections -DICACHE_FLASH
+endif
+CFLAGS += -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -falign-functions=4 -MMD -std=gnu99
 
 # C++ 编译参数
-CPPFLAGS += -Os -g -mlongcalls -mtext-section-literals -fno-exceptions -fno-rtti -falign-functions=4 -std=c++11 -MMD -ffunction-sections -fdata-sections
+CPPFLAGS += -fno-exceptions -fno-rtti -std=c++11
 
 ASFLAGS += -c -g -x assembler-with-cpp -MMD
+
 
 # Board definitions
 FLASH_SIZE ?= 4M
@@ -24,10 +29,11 @@ FLASH_MODE ?= qio
 FLASH_SPEED ?= 40
 
 # Upload parameters
-UPLOAD_SPEED ?= 230400
-UPLOAD_PORT ?= /dev/cu.usbmodem1411
+UPLOAD_SPEED ?= 921600
+#UPLOAD_PORT ?= /dev/cu.usbmodem1411
+UPLOAD_PORT ?= /dev/cu.SLAB_USBtoUART
 UPLOAD_VERB ?= -v
-UPLOAD_RESET ?= ck
+UPLOAD_RESET ?= nodemcu
 
 #
 

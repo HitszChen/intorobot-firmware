@@ -1,11 +1,11 @@
-/* 
+/*
   md5.h - exposed md5 ROM functions for esp8266
 
   Copyright (c) 2015 Hristo Gochkov. All rights reserved.
   This file is part of the esp8266 core for Arduino environment.
- 
+
   original C source from https://github.com/morrissinger/ESP8266-Websocket/raw/master/MD5.h
- 
+
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
   License as published by the Free Software Foundation; either

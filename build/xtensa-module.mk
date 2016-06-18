@@ -55,7 +55,7 @@ esptool: $(TARGET_BASE).bin
 ifeq ("$(MODULE)","bootloader")
 	$(ESP_TOOL) $(UPLOAD_VERB) -cd $(UPLOAD_RESET) -cb $(UPLOAD_SPEED) -cp $(UPLOAD_PORT) -ca 0x00000 -cf $^
 else
-	$(ESP_TOOL) $(UPLOAD_VERB) -cd $(UPLOAD_RESET) -cb $(UPLOAD_SPEED) -cp $(UPLOAD_PORT) -ca 0x40000 -cf $^
+	$(ESP_TOOL) $(UPLOAD_VERB) -cd $(UPLOAD_RESET) -cb $(UPLOAD_SPEED) -cp $(UPLOAD_PORT) -ca 0x08000 -cf $^
 endif
 	$(call echo,)
 
@@ -86,7 +86,7 @@ $(TARGET_BASE).elf : $(ALLOBJ) $(LIB_DEPS) $(LINKER_DEPS)
 	$(call echo,'Building target: $@')
 	$(call echo,'Invoking: XTENSA GCC C++ Linker')
 	$(VERBOSE)$(MKDIR) $(dir $@)
-	$(VERBOSE)$(CC) $(LDFLAGS) $(ALLOBJ) --output $@
+	$(VERBOSE)$(CC) $(CFLAGS) $(ALLOBJ) --output $@ $(LDFLAGS)
 	$(call echo,)
 
 # Tool invocations
@@ -119,7 +119,7 @@ $(BUILD_PATH)/%.o : $(SOURCE_PATH)/%.cpp
 	$(call echo,'Building file: $<')
 	$(call echo,'Invoking: XTENSA GCC CPP Compiler')
 	$(VERBOSE)$(MKDIR) $(dir $@)
-	$(VERBOSE)$(CPP) $(CINCLUDE) $(CPPFLAGS) -c -o $@ $<
+	$(VERBOSE)$(CPP) $(CINCLUDE) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 	$(call echo,)
 
 # Other Targets

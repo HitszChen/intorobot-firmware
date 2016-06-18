@@ -8,16 +8,9 @@
 #include "lwip/mem.h"
 #include "lwip/app/espconn.h"
 
-#include "at_ex_command.h"
-#include "upgrade.h"
+#include "user_config.h"
 #include "upgrade_lib.c"
 
-#define UPGRADE_DEBUG
-#ifdef UPGRADE_DEBUG
-#define UPGRADE_DBG os_printf
-#else
-#define UPGRADE_DBG
-#endif
 
 
 LOCAL md5_context_t _ctx;
@@ -29,6 +22,7 @@ LOCAL os_timer_t upgrade_timer;
 LOCAL uint32 totallength = 0;
 LOCAL uint32 sumlength = 0;
 
+extern uint8_t down_progress;
 
 /******************************************************************************
  * FunctionName : upgrade_disconcb
@@ -84,6 +78,7 @@ LOCAL void ICACHE_FLASH_ATTR
 upgrade_connect_timeout_cb(struct espconn *pespconn){
     struct upgrade_server_info *server;
 
+	DEBUG("upgrade_connect_timeout_cb\n");
     if (pespconn == NULL) {
         return;
     }
@@ -105,7 +100,7 @@ upgrade_connect_timeout_cb(struct espconn *pespconn){
 //下载结果检查
 LOCAL void ICACHE_FLASH_ATTR
 upgrade_check(struct upgrade_server_info *server){
-	UPGRADE_DBG("upgrade_check\n");
+	DEBUG("upgrade_check\n");
     if (server == NULL) {
         return;
     }
@@ -153,19 +148,26 @@ upgrade_download(void *arg, char *pusrdata, unsigned short length){
         os_memcpy(returncode, ptr+9, 3);
 
         if(os_strcmp(returncode ,"200")){ //下载失败
-            UPGRADE_DBG("http download return code  error\n");
+            DEBUG("http download return code  error\n");
             upgrade_check(server);
             return;
         }
+        else
+        {
+            os_memset(output, 0, sizeof(output));
+            os_sprintf(output,"%s:2\r\n", CMD_DOWN_FILE); //正在下载
+            at_port_print(output);
+            at_response_ok();
+        }
     }
-   if (totallength == 0 && (ptr = (char *)os_strstr(pusrdata, "\r\n\r\n")) != NULL &&
+
+    if (totallength == 0 && (ptr = (char *)os_strstr(pusrdata, "\r\n\r\n")) != NULL &&
             (ptr = (char *)os_strstr(pusrdata, "Content-Length")) != NULL) {
         ptr = (char *)os_strstr(pusrdata, "\r\n\r\n");
         length -= ptr - pusrdata;
         length -= 4;
         totallength += length;
-        UPGRADE_DBG("upgrade file download start.\n");
-        file_info_clear();
+        DEBUG("upgrade file download start.\n");
         MD5Init(&_ctx);
         MD5Update(&_ctx, ptr + 4, length);
         system_upgrade(ptr + 4, length);
@@ -179,54 +181,86 @@ upgrade_download(void *arg, char *pusrdata, unsigned short length){
                 os_memset(lengthbuffer, 0, sizeof(lengthbuffer));
                 os_memcpy(lengthbuffer, ptr, ptmp2 - ptr);
                 sumlength = atoi(lengthbuffer);
+                uint32_t  limit_size = 0;
+                if (ONLINE_STM32_APP_FILE == filetype) {
+                    limit_size = CACHE_ONLINE_STM32_APP_SEC_NUM * SPI_FLASH_SEC_SIZE;
+                }
+                else if (ESP8266_APP_FILE == filetype) {
+                    limit_size = CACHE_ESP8266_APP_SEC_NUM * SPI_FLASH_SEC_SIZE;
+                }
+                else if (DEFAULT_STM32_APP_FILE == filetype) {
+                    limit_size = CACHE_DEF_STM32_APP_SEC_NUM * SPI_FLASH_SEC_SIZE;
+                }
+                if(sumlength >= limit_size){
+                    DEBUG("sumlength failed\n");
+                    upgrade_check(server);
+                    return;
+                }
             } else {
-                UPGRADE_DBG("sumlength failed\n");
+                DEBUG("sumlength failed\n");
                 upgrade_check(server);
                 return;
             }
         } else {
             upgrade_check(server);
-            UPGRADE_DBG("Content-Length: failed\n");
+            DEBUG("Content-Length: failed\n");
             return;
         }
     } else {
         if(totallength + length > sumlength)
         {length = sumlength - totallength;}
         totallength += length;
-        os_printf("totallen = %d\n",totallength);
+        DEBUG("totallen = %d\n",totallength);
         MD5Update(&_ctx, pusrdata, length);
         system_upgrade(pusrdata, length);
     }
 
-    progress = totallength*100/sumlength;
-    os_memset(output, 0, sizeof(output));
-    os_sprintf(output,"%s:2,%d\r\n", CMD_DOWN_FILE, progress);
-    at_port_print(output);       //正在下载  显示下载进度
-    //at_response_ok();
+    if (ONLINE_STM32_APP_FILE == filetype) {
+        down_progress = totallength*100/sumlength;
+    }
+    else if (ESP8266_APP_FILE == filetype) {
+        down_progress = totallength*50/sumlength;
+    }
+    else if (DEFAULT_STM32_APP_FILE == filetype) {
+        down_progress = 50+totallength*50/sumlength;
+    }
 
     if ((totallength == sumlength)) {
-        UPGRADE_DBG("upgrade file download finished.\n");
+        DEBUG("upgrade file download finished.\n");
         MD5Final(md5_calc, &_ctx);
         os_memset(output, 0, sizeof(output));
         for(i = 0; i < 16; i++)
         {
             os_sprintf(output + (i * 2), "%02x", md5_calc[i]);
         }
-        os_printf("md5 = %s\n",output);
+        DEBUG("md5 = %s\n",output);
         if(!os_strcmp(server->md5,output)){
-            UPGRADE_DBG("md5 check ok.\n");
+            DEBUG("md5 check ok.\n");
             system_upgrade_flag_set(UPGRADE_FLAG_FINISH);
-            //保存文件
-            file_info->file_size = sumlength;
-            file_info->file_start_sec = UPDATE_CACHE_WIFIAPP_SEC_START;
-            file_info_write(file_info);
-
+            if (ONLINE_STM32_APP_FILE == filetype) {
+                cmd_info.online_stm32_app_size=sumlength;
+            }
+            else if (ESP8266_APP_FILE == filetype) {
+                cmd_info.esp8266_app_size = sumlength;
+                cmd_info.online_stm32_app_size = 0;
+            }
+            else if (DEFAULT_STM32_APP_FILE == filetype) {
+                cmd_info.default_stm32_app_size = sumlength;
+                cmd_info.esp8266_app_addr[0] = CACHE_ESP8266_APP_ADDR;
+                cmd_info.esp8266_app_addr[1] = ESP8266_APP_ADDR;
+                cmd_info.default_stm32_app_addr[0] = CACHE_DEF_STM32_APP_ADDR;
+                cmd_info.default_stm32_app_addr[1] = DEF_STM32_APP_ADDR;
+                cmd_info.action = ACTION_COPY_RAW;
+            }
+            else {
+            }
+            eboot_command_write(&cmd_info);
             totallength = 0;
             sumlength = 0;
             upgrade_check(server);
             return;
         }
-        UPGRADE_DBG("md5 check error.\n");
+        DEBUG("md5 check error.\n");
         upgrade_check(server);
         return;
     }
@@ -250,14 +284,14 @@ LOCAL void ICACHE_FLASH_ATTR
 upgrade_connect_cb(void *arg){
     struct espconn *pespconn = arg;
 
-    UPGRADE_DBG("upgrade_connect_cb\n");
+    DEBUG("upgrade_connect_cb\n");
     os_timer_disarm(&upgrade_connect_timer);
 
     espconn_regist_disconcb(pespconn, upgrade_disconcb);
     espconn_regist_sentcb(pespconn, upgrade_datasent);
 
     if (pbuf != NULL) {
-        UPGRADE_DBG("%s\n", pbuf);
+        DEBUG("%s\n", pbuf);
         espconn_sent(pespconn, pbuf, os_strlen(pbuf));
     }
 }
@@ -271,10 +305,9 @@ upgrade_connect_cb(void *arg){
 *******************************************************************************/
 LOCAL void ICACHE_FLASH_ATTR
 upgrade_connect(struct upgrade_server_info *server){
-	UPGRADE_DBG("upgrade_connect\n");
+	DEBUG("upgrade_connect\n");
 
-	pbuf = server->url;
-
+    pbuf = server->url;
     espconn_regist_connectcb(upgrade_conn, upgrade_connect_cb);
     espconn_regist_recvcb(upgrade_conn, upgrade_download);
 
@@ -301,7 +334,7 @@ system_upgrade_start(struct upgrade_server_info *server){
         return false;
     }
     if (server == NULL) {
-    	UPGRADE_DBG("server is NULL\n");
+    	DEBUG("server is NULL\n");
     	return false;
     }
     if (upgrade_conn == NULL) {
@@ -324,7 +357,7 @@ system_upgrade_start(struct upgrade_server_info *server){
 
             os_memcpy(upgrade_conn->proto.tcp->remote_ip, server->ip, 4);
 
-            UPGRADE_DBG("%s\n", __func__);
+            DEBUG("%s\n", __func__);
             upgrade_connect(server);
 
             if (server->check_cb !=  NULL) {
@@ -334,7 +367,6 @@ system_upgrade_start(struct upgrade_server_info *server){
             }
         }
     }
-
     return true;
 }
 

@@ -5,7 +5,6 @@
  * 3-clause BSD license to be found in the LICENSE file.
  */
 
-
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -17,23 +16,22 @@
 extern void ets_wdt_enable(void);
 extern void ets_wdt_disable(void);
 
+/*从flash中导入应用*/
 int load_app_from_flash_raw(const uint32_t flash_addr)
 {
     image_header_t image_header;
     uint32_t pos = flash_addr + APP_START_OFFSET;
 
-    if (SPIRead(pos, &image_header, sizeof(image_header))) {
+    if (SPIRead(pos, &image_header, sizeof(image_header))){
         return 1;
     }
     pos += sizeof(image_header);
 
-
     for (uint32_t section_index = 0;
         section_index < image_header.num_segments;
-        ++section_index)
-    {
+        ++section_index){
         section_header_t section_header = {0};
-        if (SPIRead(pos, &section_header, sizeof(section_header))) {
+        if (SPIRead(pos, &section_header, sizeof(section_header))){
             return 2;
         }
         pos += sizeof(section_header);
@@ -42,25 +40,26 @@ int load_app_from_flash_raw(const uint32_t flash_addr)
 
         bool load = false;
 
-        if (address < 0x40000000) {
+        if (address < 0x40000000){
             load = true;
         }
 
-        if (address >= 0x40100000 && address < 0x40108000) {
+        if (address >= 0x40100000 && address < 0x40108000){
             load = true;
         }
 
-        if (address >= 0x60000000) {
+        if (address >= 0x60000000){
             load = true;
         }
 
-        if (!load) {
+        if (!load){
             pos += section_header.size;
             continue;
         }
 
-        if (SPIRead(pos, (void*)address, section_header.size))
+        if (SPIRead(pos, (void*)address, section_header.size)){
             return 3;
+        }
 
         pos += section_header.size;
     }
@@ -72,15 +71,14 @@ int load_app_from_flash_raw(const uint32_t flash_addr)
     return 0;
 }
 
-
-
+/*从flash起始地址复制至目标地址*/
 int copy_raw(const uint32_t src_addr,
              const uint32_t dst_addr,
              const uint32_t size)
 {
     // require regions to be aligned
     if (src_addr & 0xfff != 0 ||
-        dst_addr & 0xfff != 0) {
+        dst_addr & 0xfff != 0){
         return 1;
     }
 
@@ -90,14 +88,14 @@ int copy_raw(const uint32_t src_addr,
     uint32_t saddr = src_addr;
     uint32_t daddr = dst_addr;
 
-    while (left) {
-        if (SPIEraseSector(daddr/buffer_size)) {
+    while (left){
+        if (SPIEraseSector(daddr/buffer_size)){
             return 2;
         }
-        if (SPIRead(saddr, buffer, buffer_size)) {
+        if (SPIRead(saddr, buffer, buffer_size)){
             return 3;
         }
-        if (SPIWrite(daddr, buffer, buffer_size)) {
+        if (SPIWrite(daddr, buffer, buffer_size)){
             return 4;
         }
         saddr += buffer_size;
@@ -108,46 +106,50 @@ int copy_raw(const uint32_t src_addr,
     return 0;
 }
 
-
-
 void main()
 {
-    int res = 9;
+    int res = 9, count=3;
     struct eboot_command cmd;
 
-    if (eboot_command_read(&cmd) == 0) {
-        // valid command was passed via RTC_MEM
-        eboot_command_clear();
-        ets_putc('@');
-    } else {
-        // no valid command found
-        cmd.action = ACTION_LOAD_APP;
-        cmd.args[0] = 0;
-        ets_putc('~');
-    }
-
-    if (cmd.action == ACTION_COPY_RAW) {
+    eboot_command_read(&cmd);
+    //ets_printf("1111111111\r\n");
+    if (cmd.action == ACTION_COPY_RAW){
         ets_putc('c'); ets_putc('p'); ets_putc(':');
-        ets_wdt_disable();
-        res = copy_raw(cmd.args[0], cmd.args[1], cmd.args[2]);
-        ets_wdt_enable();
-        ets_putc('0'+res); ets_putc('\n');
-        if (res == 0) {
-            cmd.action = ACTION_LOAD_APP;
-            cmd.args[0] = cmd.args[1];
+        if(cmd.esp8266_app_size && cmd.default_stm32_app_size){
+            ets_wdt_disable();
+            while(count--)
+            {
+                //wifi update
+                res = copy_raw(cmd.esp8266_app_addr[0], cmd.esp8266_app_addr[1], cmd.esp8266_app_size);
+                //default app update
+                if (res == 0){
+                    res = copy_raw(cmd.default_stm32_app_addr[0], cmd.default_stm32_app_addr[1], cmd.default_stm32_app_size);
+                }
+                if(res == 0){
+                    break;
+                }
+            }
+            ets_wdt_enable();
         }
+        ets_putc('0'+res); ets_putc('\n');
+        cmd.action = ACTION_LOAD_APP;
+        cmd.esp8266_app_size = 0;
+        cmd.online_stm32_app_size = 0;
+        eboot_command_write(&cmd);
     }
 
-    if (cmd.action == ACTION_LOAD_APP) {
+    cmd.action = ACTION_LOAD_APP;
+    if (cmd.action == ACTION_LOAD_APP){
         ets_putc('l'); ets_putc('d'); ets_putc('\n');
-        res = load_app_from_flash_raw(cmd.args[0]);
+        res = load_app_from_flash_raw(0);
         //we will get to this only on load fail
         ets_putc('e'); ets_putc(':'); ets_putc('0'+res); ets_putc('\n');
     }
 
-    if (res) {
+    if (res){
         SWRST;
     }
 
-    while(true){}
+    while(true)
+    {}
 }

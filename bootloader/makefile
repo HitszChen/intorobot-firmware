@@ -25,5 +25,7 @@ TARGET=none
 endif
 endif
 
+TARGET_FILE_NAME ?= $(PLATFORM)-boot
+
 include ../build/arm-tlm.mk
 

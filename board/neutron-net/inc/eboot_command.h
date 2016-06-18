@@ -8,7 +8,8 @@
 #ifndef EBOOT_COMMAND_H
 #define EBOOT_COMMAND_H
 
-#include <stdint.h>
+#include "c_types.h"
+//#include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 

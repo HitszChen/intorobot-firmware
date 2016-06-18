@@ -43,5 +43,7 @@ TARGET=exe
 endif
 endif
 
+TARGET_FILE_NAME ?= default-$(PLATFORM)
+
 include ../build/arm-tlm.mk
 
