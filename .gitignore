@@ -28,3 +28,6 @@ GTAGS
 
 # 编译结果
 build/target/
+
+# tags
+tags
