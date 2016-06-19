@@ -11,7 +11,7 @@ LDFLAGS += -nostartfiles
 CFLAGS += -I atom/inc/inc_board/
 CFLAGS += -I atom/inc/inc_mcu/
 CFLAGS += -I atom/inc/inc_board/ros_lib/
-#CPPFLAGS = 
+#CPPFLAGS =
 
 LDFLAGS += -L atom/lib/ -lboard
 LDFLAGS += -L atom/lib/ -lplatform

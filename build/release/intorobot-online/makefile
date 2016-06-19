@@ -73,7 +73,7 @@ CPPFLAGS += -fno-exceptions -fno-rtti -std=gnu++11 -fcheck-new
 
 #ASFLAGS += -g3 -gdwarf-2 -mthumb -x assembler-with-cpp -fmessage-length=0
 LDFLAGS += -mlittle-endian -Xlinker --gc-sections --specs=nano.specs --specs=nosys.specs -lc -lnosys
-LDFLAGS += -Wl,-Map,firmware.map
+LDFLAGS += -Wl,-Map,$(BIN_PLATFORM_OUT)/platform.map
 LDFLAGS += -Wl,--start-group -lgcc -lc -Wl,--end-group
 
 USE_PRINTF_FLOAT ?= y
